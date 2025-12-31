@@ -1,0 +1,13 @@
+Please use 12 Labs (via MCP) to run full video analysis and extract all main topics and subtopics.
+For each topic:
+Create short atomic notes (maximum 5 lines per note)
+Focus only on the core idea
+Include closely related subtopics
+Additionally:
+Identify relationships between topics and subtopics
+Link related notes using Obsidian-style backlinks ([[Note Name]])
+Output requirements:
+Each topic as a separate Markdown (.md) note
+Obsidian-compatible formatting
+Clear interconnections between notes
+The final output should be ready to store directly in an Obsidian knowledge vault.
