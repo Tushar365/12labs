@@ -1,0 +1,9 @@
+Do create a basic web application using Flask with a simple UI (white background, black text, basic buttons).
+The app should:
+Have a dropdown to select from the list of available video indexes
+Based on the selected index, show another dropdown listing the videos under that index
+Display the thumbnail of the selected video alongside its video name
+Include a button to run 12 Labs video analysis and generate a YouTube-ready description
+Display the generated YouTube description on the page
+Provide a “Copy” button to copy the description to clipboard
+Keep the UI minimal, clean, and functional. Use Markdown-compatible output for the generated description.

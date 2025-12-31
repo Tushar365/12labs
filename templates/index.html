@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12 Labs Video Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #fff;
+            color: #000;
+        }
+        
+        select:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background-color: #333333;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .video-info {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+        
+        .thumbnail {
+            flex-shrink: 0;
+            width: 200px;
+            height: 112px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .video-name {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .description-section {
+            margin-top: 30px;
+        }
+        
+        .description-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .description-content {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .description-content:empty::before {
+            content: "No description generated yet. Select a video and click 'Generate YouTube Description'.";
+            color: #999;
+            font-style: italic;
+        }
+        
+        .loading {
+            display: none;
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .error {
+            color: #d32f2f;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .success {
+            color: #2e7d32;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>12 Labs Video Analysis</h1>
+        
+        <div class="section">
+            <div class="form-group">
+                <label for="indexSelect">Select Video Index:</label>
+                <select id="indexSelect">
+                    <option value="">-- Select an index --</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="videoSelect">Select Video:</label>
+                <select id="videoSelect" disabled>
+                    <option value="">-- Select an index first --</option>
+                </select>
+            </div>
+            
+            <div id="videoInfo" style="display: none;">
+                <div class="video-info">
+                    <div class="thumbnail" id="thumbnailContainer">
+                        <span style="color: #999;">No thumbnail</span>
+                    </div>
+                    <div class="video-name" id="videoName"></div>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <button id="analyzeBtn" disabled>Generate YouTube Description</button>
+                <div class="loading" id="loading">Generating description...</div>
+                <div class="error" id="error"></div>
+            </div>
+        </div>
+        
+        <div class="section description-section">
+            <div class="description-header">
+                <h2 style="font-size: 20px; font-weight: 600;">Generated YouTube Description</h2>
+                <button id="copyBtn" disabled>Copy to Clipboard</button>
+            </div>
+            <div class="description-content" id="descriptionContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        const indexSelect = document.getElementById('indexSelect');
+        const videoSelect = document.getElementById('videoSelect');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const videoInfo = document.getElementById('videoInfo');
+        const thumbnailContainer = document.getElementById('thumbnailContainer');
+        const videoName = document.getElementById('videoName');
+        const descriptionContent = document.getElementById('descriptionContent');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        
+        let currentIndexId = null;
+        let currentVideoId = null;
+        let currentVideoData = null;
+        
+        // Load indexes on page load
+        fetch('/api/indexes')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    data.indexes.forEach(index => {
+                        const option = document.createElement('option');
+                        option.value = index.id;
+                        option.textContent = index.name;
+                        indexSelect.appendChild(option);
+                    });
+                } else {
+                    error.textContent = 'Failed to load indexes: ' + (data.error || 'Unknown error');
+                    error.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                error.textContent = 'Error loading indexes: ' + err.message;
+                error.style.display = 'block';
+            });
+        
+        // Handle index selection
+        indexSelect.addEventListener('change', (e) => {
+            const indexId = e.target.value;
+            currentIndexId = indexId;
+            
+            if (!indexId) {
+                videoSelect.disabled = true;
+                videoSelect.innerHTML = '<option value="">-- Select an index first --</option>';
+                videoInfo.style.display = 'none';
+                analyzeBtn.disabled = true;
+                return;
+            }
+            
+            // Load videos for selected index
+            videoSelect.disabled = true;
+            videoSelect.innerHTML = '<option value="">Loading videos...</option>';
+            error.style.display = 'none';
+            
+            fetch(`/api/videos/${indexId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        videoSelect.innerHTML = '<option value="">-- Select a video --</option>';
+                        data.videos.forEach(video => {
+                            const option = document.createElement('option');
+                            option.value = video.id;
+                            option.textContent = video.name;
+                            option.dataset.videoData = JSON.stringify(video);
+                            videoSelect.appendChild(option);
+                        });
+                        videoSelect.disabled = false;
+                    } else {
+                        videoSelect.innerHTML = '<option value="">Error loading videos</option>';
+                        error.textContent = 'Failed to load videos: ' + (data.error || 'Unknown error');
+                        error.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    videoSelect.innerHTML = '<option value="">Error loading videos</option>';
+                    error.textContent = 'Error loading videos: ' + err.message;
+                    error.style.display = 'block';
+                });
+        });
+        
+        // Handle video selection
+        videoSelect.addEventListener('change', (e) => {
+            const videoId = e.target.value;
+            currentVideoId = videoId;
+            
+            if (!videoId) {
+                videoInfo.style.display = 'none';
+                analyzeBtn.disabled = true;
+                return;
+            }
+            
+            // Get video data
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            currentVideoData = JSON.parse(selectedOption.dataset.videoData);
+            
+            // Display video info
+            videoName.textContent = currentVideoData.name;
+            
+            // Display thumbnail
+            if (currentVideoData.thumbnail_url) {
+                thumbnailContainer.innerHTML = `<img src="${currentVideoData.thumbnail_url}" alt="Video thumbnail" onerror="this.parentElement.innerHTML='<span style=\\'color: #999;\\'>No thumbnail</span>'">`;
+            } else {
+                thumbnailContainer.innerHTML = '<span style="color: #999;">No thumbnail</span>';
+            }
+            
+            videoInfo.style.display = 'block';
+            analyzeBtn.disabled = false;
+            descriptionContent.textContent = '';
+            copyBtn.disabled = true;
+        });
+        
+        // Handle analyze button
+        analyzeBtn.addEventListener('click', () => {
+            if (!currentVideoId || !currentIndexId) {
+                return;
+            }
+            
+            analyzeBtn.disabled = true;
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            descriptionContent.textContent = '';
+            
+            fetch('/api/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    video_id: currentVideoId,
+                    index_id: currentIndexId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                analyzeBtn.disabled = false;
+                
+                if (data.success) {
+                    descriptionContent.textContent = data.description;
+                    copyBtn.disabled = false;
+                } else {
+                    error.textContent = 'Failed to generate description: ' + (data.error || 'Unknown error');
+                    error.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                analyzeBtn.disabled = false;
+                error.textContent = 'Error generating description: ' + err.message;
+                error.style.display = 'block';
+            });
+        });
+        
+        // Handle copy button
+        copyBtn.addEventListener('click', () => {
+            const text = descriptionContent.textContent;
+            if (!text) {
+                return;
+            }
+            
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = 'Copied!';
+                    copyBtn.style.backgroundColor = '#2e7d32';
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                        copyBtn.style.backgroundColor = '#000000';
+                    }, 2000);
+                })
+                .catch(err => {
+                    error.textContent = 'Failed to copy to clipboard: ' + err.message;
+                    error.style.display = 'block';
+                });
+        });
+    </script>
+</body>
+</html>
+
